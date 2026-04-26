@@ -98,3 +98,41 @@ Presenter - презентер содержит основную логику п
 `emit<T extends object>(event: string, data?: T): void` - инициализация события. При вызове события в метод передается название события и объект с данными, который будет использован как аргумент для вызова обработчика.  
 `trigger<T extends object>(event: string, context?: Partial<T>): (data: T) => void` - возвращает функцию, при вызове которой инициализируется требуемое в параметрах событие с передачей в него данных из второго параметра.
 
+#### ProductsCatalog (каталог товаров)
+products: IProduct[] - список товаров
+
+selectedProduct: IProduct | null - выбранный товар
+
+Методы: setProducts, getProducts, getProductById, setSelectedProduct, getSelectedProduct
+
+#### Basket (корзина)
+items: IProduct[] - товары в корзине
+
+Методы: getItems, addItem, removeItem, clearBasket, getTotalPrice, getItemCount, containsItem
+
+#### Customer (покупатель)
+payment: TPayment | null - способ оплаты
+
+address, phone, email - контактные данные
+
+Методы: setData, getData, clearData, validate
+
+## Коммуникационный слой
+WebLarekAPI (реализует IApi)
+Использует композицию с базовым классом Api
+
+getProducts(): Promise<IProductResponse> - загрузка товаров
+
+postOrder(order: IOrder): Promise<IOrderResult> - отправка заказа
+
+Основные типы данных
+typescript
+type TPayment = 'online' | 'cash';
+type TBuyerValidationErrors = Partial<Record<keyof IBuyer, string>>;
+
+interface IProduct { id, description, image, title, category, price }
+interface IBuyer { payment, email, phone, address }
+interface IOrder extends IBuyer { items, total }
+interface IOrderResult { id, total }
+interface IProductResponse { total, items }
+interface IApi { getProducts(), postOrder() }
