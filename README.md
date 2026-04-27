@@ -98,41 +98,128 @@ Presenter - презентер содержит основную логику п
 `emit<T extends object>(event: string, data?: T): void` - инициализация события. При вызове события в метод передается название события и объект с данными, который будет использован как аргумент для вызова обработчика.  
 `trigger<T extends object>(event: string, context?: Partial<T>): (data: T) => void` - возвращает функцию, при вызове которой инициализируется требуемое в параметрах событие с передачей в него данных из второго параметра.
 
-#### ProductsCatalog (каталог товаров)
-products: IProduct[] - список товаров
+Модели данных
+#### ProductsCatalog
+Назначение: управление каталогом товаров (хранение, поиск, выбор текущего товара).
 
-selectedProduct: IProduct | null - выбранный товар
+Конструктор: constructor() – без параметров.
 
-Методы: setProducts, getProducts, getProductById, setSelectedProduct, getSelectedProduct
+Поля:
 
-#### Basket (корзина)
-items: IProduct[] - товары в корзине
+products: IProduct[] – массив всех товаров каталога.
 
-Методы: getItems, addItem, removeItem, clearBasket, getTotalPrice, getItemCount, containsItem
+selectedProduct: IProduct | null – выбранный для просмотра товар (или null).
 
-#### Customer (покупатель)
-payment: TPayment | null - способ оплаты
+Методы:
 
-address, phone, email - контактные данные
+setProducts(products: IProduct[]): void – заменяет каталог новым массивом.
 
-Методы: setData, getData, clearData, validate
+getProducts(): IProduct[] – возвращает копию массива товаров.
 
-## Коммуникационный слой
-WebLarekAPI (реализует IApi)
-Использует композицию с базовым классом Api
+getProductById(id: string): IProduct | undefined – находит товар по id.
 
-getProducts(): Promise<IProductResponse> - загрузка товаров
+setSelectedProduct(product: IProduct | null): void – устанавливает выбранный товар.
 
-postOrder(order: IOrder): Promise<IOrderResult> - отправка заказа
+getSelectedProduct(): IProduct | null – возвращает выбранный товар.
 
-Основные типы данных
-typescript
+#### Basket
+Назначение: управление корзиной (добавление, удаление, подсчет суммы и количества).
+
+Конструктор: constructor() – без параметров.
+
+Поля:
+
+items: IProduct[] – массив товаров в корзине.
+
+Методы:
+
+getItems(): IProduct[] – возвращает массив товаров.
+
+addItem(product: IProduct): void – добавляет товар (если его ещё нет).
+
+removeItem(productId: string): void – удаляет товар по id.
+
+clearBasket(): void – очищает корзину.
+
+getTotalPrice(): number – возвращает общую стоимость.
+
+getItemCount(): number – возвращает количество товаров.
+
+containsItem(productId: string): boolean – проверяет наличие товара.
+
+#### Customer
+Назначение: хранение и валидация данных покупателя (способ оплаты, адрес, телефон, email).
+
+Конструктор: constructor() – без параметров.
+
+Поля:
+
+payment: TPayment | null – выбранный способ оплаты.
+
+address: string – адрес доставки.
+
+phone: string – номер телефона.
+
+email: string – электронная почта.
+
+Методы:
+
+setData(data: Partial<IBuyer>): void – частично обновляет данные.
+
+getData(): IBuyer – возвращает все данные.
+
+clearData(): void – сбрасывает все поля.
+
+validate(): TBuyerValidationErrors – проверяет заполненность полей, возвращает объект с ошибками.
+
+### Коммуникационный слой
+#### WebLarekAPI
+Назначение: фасад для работы с сервером, предоставляет предметно-ориентированные методы, используя внедрённую зависимость, реализующую IApi.
+
+Конструктор: constructor(api: IApi) – принимает объект, реализующий интерфейс IApi (базовый класс Api).
+
+Поля:
+
+api: IApi – экземпляр для выполнения HTTP-запросов.
+
+Методы:
+
+getProducts(): Promise<IProductResponse> – загружает список товаров.
+
+postOrder(order: IOrder): Promise<IOrderResult> – отправляет заказ.
+
+Интерфейсы и типы (src/types/index.ts)
+
 type TPayment = 'online' | 'cash';
+type ApiPostMethods = 'POST' | 'PUT' | 'DELETE';
 type TBuyerValidationErrors = Partial<Record<keyof IBuyer, string>>;
 
-interface IProduct { id, description, image, title, category, price }
-interface IBuyer { payment, email, phone, address }
-interface IOrder extends IBuyer { items, total }
-interface IOrderResult { id, total }
-interface IProductResponse { total, items }
-interface IApi { getProducts(), postOrder() }
+interface IApi {
+    get<T extends object>(uri: string): Promise<T>;
+    post<T extends object>(uri: string, data: object, method?: ApiPostMethods): Promise<T>;
+}
+
+interface IProduct {
+    id: string; description: string; image: string;
+    title: string; category: string; price: number | null;
+}
+
+interface IBuyer {
+    payment: TPayment | null;
+    email: string; phone: string; address: string;
+}
+
+interface IOrder extends IBuyer {
+    items: string[];
+    total: number;
+}
+
+interface IOrderResult {
+    id: string;
+    total: number;
+}
+
+interface IProductResponse {
+    total: number;
+    items: IProduct[];
+}

@@ -1,8 +1,9 @@
 export type TPayment = 'online' | 'cash';
+export type ApiPostMethods = 'POST' | 'PUT' | 'DELETE';
 
 export interface IApi {
-    getProducts(): Promise<IProductResponse>;
-    postOrder(order: IOrder): Promise<IOrderResult>;
+    get<T extends object>(uri: string): Promise<T>;
+    post<T extends object>(uri: string, data: object, method?: ApiPostMethods): Promise<T>;
 }
 
 export interface IProduct {
@@ -36,5 +37,4 @@ export interface IProductResponse {
     items: IProduct[];
 }
 
-// Новый тип для ошибок валидации
 export type TBuyerValidationErrors = Partial<Record<keyof IBuyer, string>>;

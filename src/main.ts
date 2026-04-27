@@ -4,13 +4,13 @@ import { ProductsCatalog } from './components/models/ProductsCatalog';
 import { Basket } from './components/models/Basket';
 import { Customer } from './components/models/Customer';
 import { WebLarekAPI } from './components/services/WebLarekAPI';
-import { API_URL } from './utils/constants'; // CDN_URL удалён, так как не используется
+import { Api } from './components/base/Api'; // Импортируем базовый класс Api
+import { API_URL } from './utils/constants';
 import { apiProducts } from './utils/data';
 
 // ==================== 1. Тестирование моделей на статических данных ====================
 console.group('Тестирование моделей данных (статические данные)');
 
-// --- Каталог ---
 const productsModel = new ProductsCatalog();
 productsModel.setProducts(apiProducts.items);
 console.log('setProducts() - каталог сохранён');
@@ -23,7 +23,6 @@ if (firstProduct) {
     console.log('getSelectedProduct():', productsModel.getSelectedProduct());
 }
 
-// --- Корзина ---
 const basket = new Basket();
 basket.addItem(firstProduct);
 console.log('addItem(firstProduct) - корзина:', basket.getItems());
@@ -42,14 +41,12 @@ console.log(`removeItem("${firstProduct.id}") - корзина:`, basket.getItem
 basket.clearBasket();
 console.log('clearBasket() - корзина:', basket.getItems());
 
-// --- Покупатель ---
 const customer = new Customer();
 customer.setData({ email: 'test@example.com', phone: '+71234567890', address: 'ул. Пушкина, д.1', payment: 'online' });
 console.log('setData() и getData():', customer.getData());
 console.log('validate() (все поля валидны):', customer.validate());
 
 const invalidCustomer = new Customer();
-// payment не передаём, чтобы проверить ошибку "Не выбран способ оплаты"
 invalidCustomer.setData({ email: '', phone: '123', address: '' });
 console.log('validate() с ошибками:', invalidCustomer.validate());
 
@@ -61,7 +58,10 @@ console.groupEnd();
 // ==================== 2. Работа с сервером (коммуникационный слой) ====================
 console.group('Запрос к серверу и сохранение в каталог');
 
-const api = new WebLarekAPI(API_URL);
+// Создаём экземпляр базового Api, который реализует IApi
+const baseApi = new Api(API_URL);
+// Передаём его в WebLarekAPI
+const api = new WebLarekAPI(baseApi);
 
 api.getProducts()
     .then(data => {
