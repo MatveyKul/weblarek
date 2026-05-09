@@ -1,4 +1,5 @@
 import { IBuyer, TPayment, TBuyerValidationErrors } from '../../types';
+import { IEventEmitter } from '../base/Events';
 
 export class Customer {
     private payment: TPayment | null = null;
@@ -6,16 +7,36 @@ export class Customer {
     private phone: string = '';
     private email: string = '';
 
+    constructor(private events: IEventEmitter) {}
+
     setData(data: Partial<IBuyer>): void {
-        if (data.payment !== undefined) this.payment = data.payment;
-        if (data.address !== undefined) this.address = data.address;
-        if (data.phone !== undefined) this.phone = data.phone;
-        if (data.email !== undefined) this.email = data.email;
+        let changed = false;
+        
+        if (data.payment !== undefined && this.payment !== data.payment) {
+            this.payment = data.payment;
+            changed = true;
+        }
+        if (data.address !== undefined && this.address !== data.address) {
+            this.address = data.address;
+            changed = true;
+        }
+        if (data.phone !== undefined && this.phone !== data.phone) {
+            this.phone = data.phone;
+            changed = true;
+        }
+        if (data.email !== undefined && this.email !== data.email) {
+            this.email = data.email;
+            changed = true;
+        }
+        
+        if (changed) {
+            this.emitChange();
+        }
     }
 
     getData(): IBuyer {
         return {
-            payment: this.payment, // возвращаем как есть, без подмены
+            payment: this.payment,
             address: this.address,
             phone: this.phone,
             email: this.email,
@@ -23,10 +44,19 @@ export class Customer {
     }
 
     clearData(): void {
+        const hadData = this.payment !== null || 
+                       this.address !== '' || 
+                       this.phone !== '' || 
+                       this.email !== '';
+        
         this.payment = null;
         this.address = '';
         this.phone = '';
         this.email = '';
+        
+        if (hadData) {
+            this.emitChange();
+        }
     }
 
     validate(): TBuyerValidationErrors {
@@ -46,5 +76,10 @@ export class Customer {
         }
 
         return errors;
+    }
+
+    // Приватный метод для генерации событий при изменении данных
+    private emitChange(): void {
+        this.events.emit('customer:changed', this.getData());
     }
 }
