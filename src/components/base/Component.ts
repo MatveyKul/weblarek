@@ -1,26 +1,39 @@
-/**
- * Базовый компонент
- */
 export abstract class Component<T> {
-    protected constructor(protected readonly container: HTMLElement) {
-        // Учитывайте что код в конструкторе исполняется ДО всех объявлений в дочернем классе
+    protected constructor(protected readonly container: HTMLElement) {}
+
+    get element(): HTMLElement {
+        return this.container;
     }
 
-    // Инструментарий для работы с DOM в дочерних компонентах
+    // Утилитарные методы
+    protected setText(element: HTMLElement, value: unknown): void {
+        if (element) element.textContent = String(value ?? '');
+    }
 
-    // Установить изображение с альтернативным текстом
-    protected setImage(element: HTMLImageElement, src: string, alt?: string) {
+    protected setDisabled(element: HTMLElement, state: boolean): void {
+        if (!element) return;
+        if (state) element.setAttribute('disabled', 'disabled');
+        else element.removeAttribute('disabled');
+    }
+
+    protected setImage(element: HTMLImageElement, src: string, alt?: string): void {
         if (element) {
             element.src = src;
-            if (alt) {
-                element.alt = alt;
-            }
+            if (alt) element.alt = alt;
         }
     }
 
-    // Вернуть корневой DOM-элемент
+    protected setHidden(element: HTMLElement, state: boolean): void {
+        if (element) element.style.display = state ? 'none' : '';
+    }
+
+    protected toggleClass(element: HTMLElement, className: string, force?: boolean): void {
+        if (element) element.classList.toggle(className, force);
+    }
+
+    // Метод render использует дженерик T
     render(data?: Partial<T>): HTMLElement {
-        Object.assign(this as object, data ?? {});
+        if (data) Object.assign(this, data);
         return this.container;
     }
 }

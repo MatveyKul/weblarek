@@ -230,192 +230,165 @@ interface IProductResponse {
 Каждый класс представления отвечает только за свой участок DOM-разметки и не содержит бизнес-логики.
 Взаимодействие с приложением осуществляется через события, которые генерируются компонентами и обрабатываются презентером.
 
-Базовый класс представления
 #### Класс Component<T>
 
 Назначение: базовый класс для всех визуальных компонентов приложения.
 
 Родительский класс для всех компонентов интерфейса.
 
-Конструктор
-constructor(container: HTMLElement)
-Поля
-container: HTMLElement
+Конструктор: `constructor(container: HTMLElement)`
 
-Корневой DOM-элемент компонента.
+Поля: `container: HTMLElement` - корневой DOM-элемент компонента.
 
-Методы
-render(data?: Partial<T>): HTMLElement
+Методы:
+- `render(data?: Partial<T>): HTMLElement` - обновляет данные компонента и возвращает DOM-элемент.
+- `setImage(element: HTMLImageElement, src: string, alt?: string): void` - устанавливает изображение и альтернативный текст.
 
-Обновляет данные компонента и возвращает DOM-элемент.
+#### Класс BaseCard
 
-setImage(element: HTMLImageElement, src: string, alt?: string): void
+Назначение: базовый класс для всех карточек товаров, содержит только общий функционал.
 
-Устанавливает изображение и альтернативный текст.
+Наследуется от: `Component<HTMLElement>`
 
-Классы карточек товаров
+Конструктор: `constructor(container: HTMLElement)`
 
-Все классы карточек наследуются от общего родителя Card, так как имеют общий функционал отображения информации о товаре.
+Поля:
+- `titleElement: HTMLElement` - элемент названия товара
+- `priceElement: HTMLElement` - элемент цены товара
 
-#### Класс Card
-
-Назначение: базовый класс карточки товара.
-
-Содержит общую логику отображения товара.
-
-Наследуется от:
-
-Component<IProduct>
-Конструктор
-constructor(container: HTMLElement, events: EventEmitter)
-Поля
-title: HTMLElement
-price: HTMLElement
-image?: HTMLImageElement
-category?: HTMLElement
-button?: HTMLButtonElement
-events: EventEmitter
-id: string
-Методы
-setData(product: IProduct): void
-
-Заполняет карточку данными товара.
-
-set title(value: string)
-
-Устанавливает название товара.
-
-set price(value: number | null)
-
-Устанавливает цену товара.
-
-set image(value: string)
-
-Устанавливает изображение товара.
-
-set category(value: string)
-
-Устанавливает категорию товара.
+Методы:
+- `set title(value: string)` - устанавливает название товара
+- `set price(value: number | null)` - устанавливает цену товара (если null, выводится "Бесценно")
+- `protected formatPrice(price: number | null): string` - форматирует цену в строку
 
 #### Класс CatalogCard
 
-Назначение: отображение карточки товара в каталоге.
+Назначение: карточка товара в каталоге на главной странице.
 
-Наследуется от:
+Наследуется от: `BaseCard`
 
-Card
-Особенности
-отображается в сетке каталога;
-при клике открывает подробную карточку товара.
-События
-card:select
+Дополнительные поля:
+- `categoryElement: HTMLElement` - элемент категории
+- `imageElement: HTMLImageElement` - элемент изображения
+- `productId: string` - идентификатор товара
 
-Генерируется при клике на карточку.
+Дополнительные методы:
+- `set category(value: string)` - устанавливает категорию и применяет модификатор стиля
+- `set image(value: string)` - устанавливает изображение товара
 
-#### Класс PreviewCard
+События: при клике на карточку генерируется событие `'card:select'` с id товара.
 
-Назначение: отображение подробной информации о товаре в модальном окне.
+#### Класс CardPreview
 
-Наследуется от:
+Назначение: карточка товара в модальном окне предпросмотра.
 
-Card
-Особенности
-отображает описание товара;
-содержит кнопку добавления товара в корзину.
-Поля
-description: HTMLElement
-Методы
-set description(value: string)
+Наследуется от: `BaseCard`
 
-Устанавливает описание товара.
+Дополнительные поля:
+- `descriptionElement: HTMLElement` - элемент описания
+- `categoryElement: HTMLElement` - элемент категории
+- `buttonElement: HTMLButtonElement` - кнопка действия
+- `imageElement: HTMLImageElement` - элемент изображения
+- `inBasket: boolean` - флаг наличия товара в корзине
 
-События
-basket:add
+Дополнительные методы:
+- `set category(value: string)` - устанавливает категорию
+- `set description(value: string)` - устанавливает описание товара
+- `set image(value: string)` - устанавливает изображение
+- `set buttonState(state: 'available' | 'inBasket' | 'unavailable')` - устанавливает состояние кнопки и её текст
 
-Генерируется при добавлении товара в корзину.
+События: 
+- Клик по кнопке генерирует `'preview:addToBasket'` (если товара нет в корзине) или `'preview:removeFromBasket'` (если уже в корзине)
 
 #### Класс BasketCard
 
-Назначение: отображение товара внутри корзины.
+Назначение: карточка товара в корзине.
 
-Наследуется от:
+Наследуется от: `BaseCard`
 
-Card
-Особенности
-отображается списком;
-содержит кнопку удаления товара.
-Поля
-index: HTMLElement
+Дополнительные поля:
+- `indexElement: HTMLElement` - номер товара в корзине
+- `deleteButton: HTMLButtonElement` - кнопка удаления
 
-Порядковый номер товара в корзине.
+Дополнительные методы:
+- `set index(value: number)` - устанавливает порядковый номер товара в списке
 
-Методы
-setIndex(value: number): void
+События: клик по кнопке удаления генерирует событие `'basket:removeItem'` с id товара.
 
-Устанавливает номер товара.
+#### Класс Gallery
 
-События
-basket:remove
+Назначение: контейнер для отображения карточек товаров на главной странице.
 
-Генерируется при удалении товара из корзины.
+Наследуется от: `Component<HTMLElement>`
 
-Класс страницы
+Методы:
+- `set items(elements: HTMLElement[])` - рендерит коллекцию карточек в контейнер
+
 #### Класс Page
 
-Назначение: управление основными элементами страницы.
+Назначение: управление основным блоком страницы (header с кнопкой корзины и счётчиком).
 
-Наследуется от:
+Наследуется от: `Component<HTMLElement>`
 
-Component<object>
-Конструктор
-constructor(container: HTMLElement, events: EventEmitter)
-Поля
-catalog: HTMLElement
-basketCounter: HTMLElement
-wrapper: HTMLElement
-basketButton: HTMLButtonElement
-Методы
-set catalog(items: HTMLElement[])
+Поля:
+- `basketButton: HTMLButtonElement` - кнопка открытия корзины
+- `counterElement: HTMLElement` - счётчик товаров в корзине
 
-Отображает каталог товаров.
+Методы:
+- `set counter(value: number)` - обновляет отображение количества товаров
 
-set counter(value: number)
+События: клик по кнопке корзины генерирует событие `'basket:open'`.
 
-Обновляет счётчик корзины.
-
-set locked(value: boolean)
-
-Блокирует прокрутку страницы при открытии модального окна.
-
-События
-basket:open
-
-Генерируется при открытии корзины.
-
-Класс корзины
 #### Класс BasketView
 
-Назначение: отображение корзины товаров.
+Назначение: отображение содержимого корзины в модальном окне.
 
-Наследуется от:
+Наследуется от: `Component<HTMLElement>`
 
-Component<object>
-Конструктор
-constructor(container: HTMLElement, events: EventEmitter)
-Поля
-list: HTMLElement
-total: HTMLElement
-button: HTMLButtonElement
-Методы
-set items(items: HTMLElement[])
+Методы:
+- `set items(elements: HTMLElement[])` - рендерит список карточек товаров
+- `set total(value: number)` - обновляет общую стоимость и состояние кнопки оформления
 
-Отображает список товаров корзины.
+События: клик по кнопке "Оформить" генерирует событие `'basket:order'`.
 
-set total(value: number)
+#### Класс OrderForm
 
-Отображает общую стоимость заказа.
+Назначение: форма выбора способа оплаты и адреса доставки.
 
-toggleButton(state: boolean): void
+Наследуется от: `Form`
+
+Методы:
+- `setSelectedPayment(payment: TPayment | null)` - подсвечивает выбранный способ оплаты
+- `setAddress(address: string)` - заполняет поле адреса
+- `setAddressError(error: string | null)` - отображает ошибку адреса
+- `setNextButtonEnabled(enabled: boolean)` - включает/отключает кнопку "Далее"
+
+События: генерирует `'order:paymentSelected'` при клике на кнопку способа оплаты и `'order:addressChanged'` при вводе адреса.
+
+#### Класс ContactsForm
+
+Назначение: форма ввода контактных данных (email и телефон).
+
+Наследуется от: `Form`
+
+Методы:
+- `setEmail(email: string)` - заполняет поле email
+- `setPhone(phone: string)` - заполняет поле телефона
+- `setValidationErrors(errors: string[])` - отображает ошибки валидации
+- `setPayButtonEnabled(enabled: boolean)` - включает/отключает кнопку оплаты
+
+События: генерирует `'contacts:emailChanged'` и `'contacts:phoneChanged'` при изменении полей.
+
+#### Класс Success
+
+Назначение: экран успешного оформления заказа.
+
+Наследуется от: `Component<HTMLElement>`
+
+Поля:
+- `total: number` - сумма заказа
+
+События: клик по кнопке "За новыми покупками!" генерирует событие `'success:close'`.
 
 Включает или отключает кнопку оформления заказа.
 

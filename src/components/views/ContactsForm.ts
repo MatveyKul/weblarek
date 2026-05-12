@@ -1,59 +1,38 @@
 import { Form } from './common/Form';
 import { IEventEmitter } from '../base/Events';
+import { ensureElement } from '../../utils/utils';
 
-export interface IContactsData {
-    email: string;
-    phone: string;
-}
+export class ContactsForm extends Form {
+    private emailInput: HTMLInputElement;
+    private phoneInput: HTMLInputElement;
 
-export class ContactsForm extends Form<IContactsData> {
-    protected emailInput: HTMLInputElement;
-    protected phoneInput: HTMLInputElement;
-
-    constructor(container: HTMLElement, events: IEventEmitter) {
+    constructor(container: HTMLFormElement, events: IEventEmitter) {
         super(container, events, 'contacts');
-        
-        this.emailInput = this.inputs.get('email') as HTMLInputElement;
-        this.phoneInput = this.inputs.get('phone') as HTMLInputElement;
+
+        this.emailInput = ensureElement<HTMLInputElement>('[name="email"]', container);
+        this.phoneInput = ensureElement<HTMLInputElement>('[name="phone"]', container);
+
+        this.emailInput.addEventListener('input', () => {
+            events.emit('contacts:emailChanged', { email: this.emailInput.value });
+        });
+        this.phoneInput.addEventListener('input', () => {
+            events.emit('contacts:phoneChanged', { phone: this.phoneInput.value });
+        });
     }
 
-    protected onInputChange(field: string, value: string): void {
-        // Обработка изменений
+    setEmail(email: string): void {
+        this.emailInput.value = email;
     }
 
-    protected onButtonClick(name: string): void {
-        // Кнопок в этой форме нет
+    setPhone(phone: string): void {
+        this.phoneInput.value = phone;
     }
 
-    protected validate(): boolean {
-        const email = this.emailInput?.value || '';
-        const phone = this.phoneInput?.value || '';
-        
-        const isValid = this.validateEmail(email) && this.validatePhone(phone);
-        this.setSubmitDisabled(!isValid);
-        
-        const errors: string[] = [];
-        if (!this.validateEmail(email)) errors.push('Укажите корректный email');
-        if (!this.validatePhone(phone)) errors.push('Укажите корректный телефон');
+    setValidationErrors(errors: string[]): void {
         this.showErrors(errors);
-        
-        return isValid;
     }
 
-    protected validateEmail(email: string): boolean {
-        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return re.test(email);
-    }
-
-    protected validatePhone(phone: string): boolean {
-        const digits = phone.replace(/\D/g, '');
-        return digits.length >= 10;
-    }
-
-    protected collectData(): IContactsData {
-        return {
-            email: this.emailInput?.value || '',
-            phone: this.phoneInput?.value || ''
-        };
+    setPayButtonEnabled(enabled: boolean): void {
+        this.setSubmitDisabled(!enabled);
     }
 }

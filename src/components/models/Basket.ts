@@ -13,7 +13,6 @@ export class Basket {
     addItem(product: IProduct): void {
         if (!this.containsItem(product.id)) {
             this.items.push(product);
-            // Генерируем событие об изменении корзины
             this.emitChange();
         }
     }
@@ -22,7 +21,6 @@ export class Basket {
         const wasContained = this.containsItem(productId);
         this.items = this.items.filter(item => item.id !== productId);
         if (wasContained) {
-            // Генерируем событие об изменении корзины
             this.emitChange();
         }
     }
@@ -48,10 +46,6 @@ export class Basket {
 
     // Приватный метод для генерации событий при изменении корзины
     private emitChange(): void {
-        this.events.emit('basket:changed', {
-            items: this.getItems(),
-            total: this.getTotalPrice(),
-            count: this.getItemCount()
-        });
+        this.events.emit('basket:changed'); // ← НЕ передаём данные!
     }
 }

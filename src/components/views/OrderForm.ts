@@ -1,62 +1,45 @@
 import { Form } from './common/Form';
 import { IEventEmitter } from '../base/Events';
 import { TPayment } from '../../types';
+import { ensureElement } from '../../utils/utils';
 
-export interface IOrderData {
-    payment: TPayment | null;
-    address: string;
-}
+export class OrderForm extends Form {
+    private cardButton: HTMLButtonElement;
+    private cashButton: HTMLButtonElement;
+    private addressInput: HTMLInputElement;
 
-export class OrderForm extends Form<IOrderData> {
-    protected paymentButtons: Map<string, HTMLButtonElement> = new Map();
-    protected addressInput: HTMLInputElement;
-    protected selectedPayment: TPayment | null = null;
-
-    constructor(container: HTMLElement, events: IEventEmitter) {
+    constructor(container: HTMLFormElement, events: IEventEmitter) {
         super(container, events, 'order');
-        
-        this.addressInput = this.inputs.get('address') as HTMLInputElement;
-        
-        const cardButton = this.inputs.get('card') as HTMLButtonElement;
-        const cashButton = this.inputs.get('cash') as HTMLButtonElement;
-        
-        if (cardButton) this.paymentButtons.set('online', cardButton);
-        if (cashButton) this.paymentButtons.set('cash', cashButton);
-    }
 
-    protected onInputChange(field: string, value: string): void {
-        // Обработка изменения адреса
-    }
+        this.addressInput = ensureElement<HTMLInputElement>('[name="address"]', container);
+        this.cardButton = ensureElement<HTMLButtonElement>('[name="card"]', container);
+        this.cashButton = ensureElement<HTMLButtonElement>('[name="cash"]', container);
 
-    protected onButtonClick(name: string): void {
-        if (name === 'card') {
-            this.selectedPayment = 'online';
-            this.updatePaymentButtons('online');
-        } else if (name === 'cash') {
-            this.selectedPayment = 'cash';
-            this.updatePaymentButtons('cash');
-        }
-    }
-
-    protected updatePaymentButtons(selected: TPayment): void {
-        this.paymentButtons.forEach((button, type) => {
-            this.toggleClass(button, 'button_alt-active', type === selected);
+        this.cardButton.addEventListener('click', () => {
+            events.emit('order:paymentSelected', { payment: 'online' });
+        });
+        this.cashButton.addEventListener('click', () => {
+            events.emit('order:paymentSelected', { payment: 'cash' });
+        });
+        this.addressInput.addEventListener('input', () => {
+            events.emit('order:addressChanged', { address: this.addressInput.value });
         });
     }
 
-    protected validate(): boolean {
-        const isValid = this.selectedPayment !== null && 
-                       this.addressInput && 
-                       this.addressInput.value.trim().length > 0;
-        
-        this.setSubmitDisabled(!isValid);
-        return isValid;
+    setSelectedPayment(payment: TPayment | null): void {
+        this.cardButton.classList.toggle('button_alt-active', payment === 'online');
+        this.cashButton.classList.toggle('button_alt-active', payment === 'cash');
     }
 
-    protected collectData(): IOrderData {
-        return {
-            payment: this.selectedPayment,
-            address: this.addressInput?.value || ''
-        };
+    setAddress(address: string): void {
+        this.addressInput.value = address;
+    }
+
+    setAddressError(error: string | null): void {
+        this.showErrors(error ? [error] : []);
+    }
+
+    setNextButtonEnabled(enabled: boolean): void {
+        this.setSubmitDisabled(!enabled);
     }
 }

@@ -1,45 +1,35 @@
 import { Component } from '../../base/Component';
 import { IEventEmitter } from '../../base/Events';
+import { ensureElement } from '../../../utils/utils';
 
-export class Modal extends Component<{ content: HTMLElement }> {
-    protected modalElement: HTMLElement;
-    protected contentElement: HTMLElement;
-    protected closeButton: HTMLButtonElement;
-    protected isOpen: boolean = false;
+export class Modal extends Component<HTMLElement> {
+    private modalElement: HTMLElement;
+    private contentElement: HTMLElement;
+    private closeButton: HTMLButtonElement;
+    private isOpen = false;
 
-    constructor(
-        container: HTMLElement,
-        protected events: IEventEmitter
-    ) {
+    constructor(container: HTMLElement, private events: IEventEmitter) {
         super(container);
-        
         this.modalElement = container;
-        this.contentElement = container.querySelector('.modal__content') as HTMLElement;
-        this.closeButton = container.querySelector('.modal__close') as HTMLButtonElement;
-        
-        // Закрытие по крестику
+        this.contentElement = ensureElement('.modal__content', container);
+        this.closeButton = ensureElement('.modal__close', container) as HTMLButtonElement;
+
         this.closeButton.addEventListener('click', () => this.close());
-        
-        // Закрытие по оверлею
         this.modalElement.addEventListener('click', (e) => {
-            if (e.target === this.modalElement) {
-                this.close();
-            }
+            if (e.target === this.modalElement) this.close();
         });
-        
-        // Закрытие по Escape
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && this.isOpen) {
-                this.close();
-            }
+            if (e.key === 'Escape' && this.isOpen) this.close();
         });
     }
 
-    setContent(content: HTMLElement): void {
-        if (this.contentElement) {
-            this.contentElement.innerHTML = '';
-            this.contentElement.appendChild(content);
-        }
+    set content(value: HTMLElement) {
+        this.contentElement.innerHTML = '';
+        this.contentElement.appendChild(value);
+    }
+
+    get currentContent(): HTMLElement | null {
+        return this.contentElement.firstElementChild as HTMLElement;
     }
 
     open(): void {
@@ -51,12 +41,5 @@ export class Modal extends Component<{ content: HTMLElement }> {
         this.modalElement.classList.remove('modal_active');
         this.isOpen = false;
         this.events.emit('modal:closed');
-    }
-
-    render(data?: { content: HTMLElement }): HTMLElement {
-        if (data && data.content) {
-            this.setContent(data.content);
-        }
-        return this.container;
     }
 }

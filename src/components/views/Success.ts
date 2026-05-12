@@ -1,38 +1,19 @@
 import { Component } from '../base/Component';
 import { IEventEmitter } from '../base/Events';
+import { ensureElement } from '../../utils/utils';
 
-export interface ISuccessData {
-    total: number;
-}
+export class Success extends Component<HTMLElement> {
+    private descriptionElement: HTMLElement;
+    private buttonElement: HTMLButtonElement;
 
-export class Success extends Component<ISuccessData> {
-    protected descriptionElement: HTMLElement;
-    protected closeButton: HTMLButtonElement;
-
-    constructor(
-        container: HTMLElement,
-        protected events: IEventEmitter
-    ) {
+    constructor(container: HTMLElement, events: IEventEmitter) {
         super(container);
-        
-        this.descriptionElement = container.querySelector('.order-success__description') as HTMLElement;
-        this.closeButton = container.querySelector('.order-success__close') as HTMLButtonElement;
-        
-        this.closeButton.addEventListener('click', () => {
-            events.emit('success:close');
-        });
+        this.descriptionElement = ensureElement('.order-success__description', container);
+        this.buttonElement = ensureElement('.order-success__close', container) as HTMLButtonElement;
+        this.buttonElement.addEventListener('click', () => events.emit('success:close'));
     }
 
-    protected setText(element: HTMLElement, value: unknown): void {
-        if (element) {
-            element.textContent = String(value ?? '');
-        }
-    }
-
-    render(data?: Partial<ISuccessData>): HTMLElement {
-        if (data && data.total !== undefined) {
-            this.setText(this.descriptionElement, `Списано ${data.total} синапсов`);
-        }
-        return this.container;
+    set total(value: number) {
+        this.descriptionElement.textContent = `Списано ${value} синапсов`;
     }
 }
