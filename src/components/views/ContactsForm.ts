@@ -20,19 +20,11 @@ export class ContactsForm extends Form {
         });
     }
 
-    setEmail(email: string): void {
-        this.emailInput.value = email;
+    set email(value: string) {
+        this.emailInput.value = value;
     }
 
-    setPhone(phone: string): void {
-        this.phoneInput.value = phone;
-    }
-
-    setValidationErrors(errors: string[]): void {
-        this.showErrors(errors);
-    }
-
-    setPayButtonEnabled(enabled: boolean): void {
-        this.setSubmitDisabled(!enabled);
+    set phone(value: string) {
+        this.phoneInput.value = value;
     }
 }

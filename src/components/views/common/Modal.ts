@@ -1,25 +1,31 @@
+// components/views/common/Modal.ts
 import { Component } from '../../base/Component';
 import { IEventEmitter } from '../../base/Events';
 import { ensureElement } from '../../../utils/utils';
 
-export class Modal extends Component<HTMLElement> {
+interface IModalData {
+    content: HTMLElement;
+    visible: boolean;
+}
+
+export class Modal extends Component<IModalData> {
     private modalElement: HTMLElement;
     private contentElement: HTMLElement;
     private closeButton: HTMLButtonElement;
-    private isOpen = false;
 
     constructor(container: HTMLElement, private events: IEventEmitter) {
         super(container);
         this.modalElement = container;
         this.contentElement = ensureElement('.modal__content', container);
-        this.closeButton = ensureElement('.modal__close', container) as HTMLButtonElement;
+        this.closeButton = ensureElement<HTMLButtonElement>('.modal__close', container);
 
-        this.closeButton.addEventListener('click', () => this.close());
-        this.modalElement.addEventListener('click', (e) => {
-            if (e.target === this.modalElement) this.close();
+        this.closeButton.addEventListener('click', () => {
+            this.visible = false;
         });
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && this.isOpen) this.close();
+        this.modalElement.addEventListener('click', (e) => {
+            if (e.target === this.modalElement) {
+                this.visible = false;
+            }
         });
     }
 
@@ -28,18 +34,20 @@ export class Modal extends Component<HTMLElement> {
         this.contentElement.appendChild(value);
     }
 
-    get currentContent(): HTMLElement | null {
-        return this.contentElement.firstElementChild as HTMLElement;
+    set visible(value: boolean) {
+        if (value) {
+            this.modalElement.classList.add('modal_active');
+        } else {
+            this.modalElement.classList.remove('modal_active');
+            this.events.emit('modal:closed');
+        }
     }
 
-    open(): void {
-        this.modalElement.classList.add('modal_active');
-        this.isOpen = true;
-    }
-
-    close(): void {
-        this.modalElement.classList.remove('modal_active');
-        this.isOpen = false;
-        this.events.emit('modal:closed');
+    render(data?: Partial<IModalData>): HTMLElement {
+        if (data) {
+            if (data.content !== undefined) this.content = data.content;
+            if (data.visible !== undefined) this.visible = data.visible;
+        }
+        return this.container;
     }
 }

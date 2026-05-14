@@ -1,3 +1,4 @@
+// components/services/WebLarekAPI.ts
 import { IApi, IProductResponse, IOrder, IOrderResult } from '../../types';
 
 export class WebLarekAPI {

@@ -2,7 +2,12 @@ import { Component } from '../../base/Component';
 import { IEventEmitter } from '../../base/Events';
 import { ensureElement } from '../../../utils/utils';
 
-export abstract class Form extends Component<HTMLFormElement> {
+export interface IFormState {
+    valid: boolean;
+    errors: string[];
+}
+
+export abstract class Form extends Component<IFormState> {
     protected submitButton: HTMLButtonElement;
     protected errorsContainer: HTMLElement;
 
@@ -17,15 +22,11 @@ export abstract class Form extends Component<HTMLFormElement> {
         });
     }
 
-    protected showErrors(errors: string[]): void {
+    protected set errors(errors: string[]) {
         this.errorsContainer.textContent = errors.join(', ');
     }
 
-    protected setSubmitDisabled(disabled: boolean): void {
-        if (disabled) {
-            this.submitButton.setAttribute('disabled', 'disabled');
-        } else {
-            this.submitButton.removeAttribute('disabled');
-        }
+    protected set valid(value: boolean) {
+        this.submitButton.disabled = !value;
     }
 }

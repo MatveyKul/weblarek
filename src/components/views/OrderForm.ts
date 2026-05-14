@@ -26,20 +26,12 @@ export class OrderForm extends Form {
         });
     }
 
-    setSelectedPayment(payment: TPayment | null): void {
-        this.cardButton.classList.toggle('button_alt-active', payment === 'online');
-        this.cashButton.classList.toggle('button_alt-active', payment === 'cash');
+    set payment(value: TPayment | null) {
+        this.cardButton.classList.toggle('button_alt-active', value === 'online');
+        this.cashButton.classList.toggle('button_alt-active', value === 'cash');
     }
 
-    setAddress(address: string): void {
-        this.addressInput.value = address;
-    }
-
-    setAddressError(error: string | null): void {
-        this.showErrors(error ? [error] : []);
-    }
-
-    setNextButtonEnabled(enabled: boolean): void {
-        this.setSubmitDisabled(!enabled);
+    set address(value: string) {
+        this.addressInput.value = value;
     }
 }

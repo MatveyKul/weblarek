@@ -1,26 +1,29 @@
-export type TPayment = 'online' | 'cash';
-export type ApiPostMethods = 'POST' | 'PUT' | 'DELETE';
+// types/index.ts
 
-export interface IApi {
-    get<T extends object>(uri: string): Promise<T>;
-    post<T extends object>(uri: string, data: object, method?: ApiPostMethods): Promise<T>;
-}
+export type TPayment = 'online' | 'cash';
 
 export interface IProduct {
     id: string;
+    title: string;
+    price: number | null;
+    category: string;
     description: string;
     image: string;
-    title: string;
-    category: string;
-    price: number | null;
 }
 
 export interface IBuyer {
     payment: TPayment | null;
-    email: string;
-    phone: string;
     address: string;
+    phone: string;
+    email: string;
 }
+
+export type TBuyerValidationErrors = {
+    payment?: string;
+    address?: string;
+    phone?: string;
+    email?: string;
+};
 
 export interface IOrder extends IBuyer {
     items: string[];
@@ -33,8 +36,39 @@ export interface IOrderResult {
 }
 
 export interface IProductResponse {
-    total: number;
     items: IProduct[];
+    total: number;
 }
 
-export type TBuyerValidationErrors = Partial<Record<keyof IBuyer, string>>;
+export interface IApi {
+    get<T>(uri: string): Promise<T>;
+    post<T>(uri: string, data: object, method?: ApiPostMethods): Promise<T>;
+}
+
+export type ApiPostMethods = 'POST' | 'PUT' | 'DELETE';
+
+// Интерфейсы для данных компонентов
+export interface ICardData {
+    id?: string;
+    title: string;
+    price: number | null;
+    category?: string;
+    image?: string;
+    description?: string;
+    index?: number;
+    buttonLabel?: string;
+    buttonDisabled?: boolean;
+}
+
+export interface IFormData {
+    valid?: boolean;
+    errors?: string[];
+    payment?: TPayment | null;
+    address?: string;
+    email?: string;
+    phone?: string;
+}
+
+export interface ISuccessData {
+    total: number;
+}

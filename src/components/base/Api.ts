@@ -1,6 +1,7 @@
-type ApiPostMethods = 'POST' | 'PUT' | 'DELETE';
+// components/base/Api.ts
+import { IApi, ApiPostMethods } from '../../types';
 
-export class Api {
+export class Api implements IApi {
     readonly baseUrl: string;
     protected options: RequestInit;
 
@@ -20,14 +21,14 @@ export class Api {
             .then(data => Promise.reject(data.error ?? response.statusText));
     }
 
-    get<T extends object>(uri: string) {
+    get<T>(uri: string): Promise<T> {
         return fetch(this.baseUrl + uri, {
             ...this.options,
             method: 'GET'
         }).then(this.handleResponse<T>);
     }
 
-    post<T extends object>(uri: string, data: object, method: ApiPostMethods = 'POST') {
+    post<T>(uri: string, data: object, method: ApiPostMethods = 'POST'): Promise<T> {
         return fetch(this.baseUrl + uri, {
             ...this.options,
             method,

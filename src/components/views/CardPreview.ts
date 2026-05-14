@@ -1,4 +1,4 @@
-import { BaseCard } from './BaseCard';
+import { BaseCard } from './common/BaseCard';
 import { IEventEmitter } from '../base/Events';
 import { categoryMap } from '../../utils/constants';
 import { ensureElement } from '../../utils/utils';
@@ -8,23 +8,24 @@ export class CardPreview extends BaseCard {
     private categoryElement: HTMLElement;
     private buttonElement: HTMLButtonElement;
     private imageElement: HTMLImageElement;
-    private inBasket: boolean = false;
+    private productId: string;
 
-    constructor(container: HTMLElement, events: IEventEmitter, private productId: string) {
+    constructor(container: HTMLElement, events: IEventEmitter, productId: string) {
         super(container);
+        this.productId = productId;
         this.descriptionElement = ensureElement('.card__text', container);
         this.categoryElement = ensureElement('.card__category', container);
-        this.buttonElement = ensureElement('.card__button', container) as HTMLButtonElement;
-        this.imageElement = ensureElement('.card__image', container) as HTMLImageElement;
+        this.buttonElement = ensureElement<HTMLButtonElement>('.card__button', container);
+        this.imageElement = ensureElement<HTMLImageElement>('.card__image', container);
 
         this.buttonElement.addEventListener('click', (e) => {
             e.stopPropagation();
-            if (this.inBasket) {
-                events.emit('preview:removeFromBasket', { id: this.productId });
-            } else {
-                events.emit('preview:addToBasket', { id: this.productId });
-            }
+            events.emit('preview:addToBasket', { id: this.productId });
         });
+    }
+
+    set id(value: string) {
+        this.productId = value;
     }
 
     set category(value: string) {
@@ -41,21 +42,11 @@ export class CardPreview extends BaseCard {
         this.imageElement.src = value;
     }
 
-    set buttonState(state: 'available' | 'inBasket' | 'unavailable') {
-        this.inBasket = state === 'inBasket';
-        switch (state) {
-            case 'available':
-                this.buttonElement.textContent = 'В корзину';
-                this.buttonElement.disabled = false;
-                break;
-            case 'inBasket':
-                this.buttonElement.textContent = 'Уже в корзине';
-                this.buttonElement.disabled = false;
-                break;
-            case 'unavailable':
-                this.buttonElement.textContent = 'Недоступно';
-                this.buttonElement.disabled = true;
-                break;
-        }
+    set buttonLabel(value: string) {
+        this.buttonElement.textContent = value;
+    }
+
+    set buttonDisabled(value: boolean) {
+        this.buttonElement.disabled = value;
     }
 }
