@@ -17,7 +17,7 @@ import { ContactsForm } from './components/views/ContactsForm';
 import { Success } from './components/views/Success';
 import { Gallery } from './components/views/Gallery';
 import { API_URL, CDN_URL } from './utils/constants';
-import { IOrder, TPayment, ICardData, IFormData, ISuccessData } from './types';
+import { IOrder, TPayment } from './types';
 import { cloneTemplate, ensureElement } from './utils/utils';
 
 // ==================== ИНИЦИАЛИЗАЦИЯ ====================
@@ -30,7 +30,7 @@ const catalog = new ProductsCatalog(events);
 const basket = new Basket(events);
 const customer = new Customer(events);
 
-// Состояние презентера (шаг оформления заказа)
+// Состояние презентера
 type OrderStep = 'order' | 'contacts' | null;
 let currentStep: OrderStep = null;
 
@@ -40,6 +40,11 @@ const pageContainer = ensureElement('.page__wrapper', body);
 const modalContainer = ensureElement('#modal-container', body);
 const galleryContainer = ensureElement('.gallery', body);
 
+// Поиск шаблонов через ensureElement
+const catalogCardTemplate = ensureElement<HTMLTemplateElement>('#card-catalog', document.body);
+const previewCardTemplate = ensureElement<HTMLTemplateElement>('#card-preview', document.body);
+const basketCardTemplate = ensureElement<HTMLTemplateElement>('#card-basket', document.body);
+
 // Представления
 const header = new Header(pageContainer, events);
 const gallery = new Gallery(galleryContainer);
@@ -48,14 +53,6 @@ const basketView = new BasketView(cloneTemplate('#basket'), events);
 const orderForm = new OrderForm(cloneTemplate('#order') as HTMLFormElement, events);
 const contactsForm = new ContactsForm(cloneTemplate('#contacts') as HTMLFormElement, events);
 const successView = new Success(cloneTemplate('#success'), events);
-
-// Шаблоны
-const catalogCardTemplate = document.querySelector('#card-catalog') as HTMLTemplateElement;
-const previewCardTemplate = document.querySelector('#card-preview') as HTMLTemplateElement;
-const basketCardTemplate = document.querySelector('#card-basket') as HTMLTemplateElement;
-if (!catalogCardTemplate || !previewCardTemplate || !basketCardTemplate) {
-    throw new Error('Не найдены шаблоны карточек');
-}
 
 // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
 
@@ -67,37 +64,43 @@ function renderCatalog(): void {
     const products = catalog.getProducts();
     const cards = products.map(product => {
         const container = cloneTemplate(catalogCardTemplate);
-        const card = new CardCatalog(container, events, product.id);
+        const card = new CardCatalog(container, () => {
+            events.emit('card:select', { id: product.id });
+        });
         
-        const cardData: ICardData = {
+        card.render({
             title: product.title,
             price: product.price,
             category: product.category,
             image: getImageUrl(product.image)
-        };
-        card.render(cardData);
+        });
         return container;
     });
-    gallery.items = cards;
+    
+    gallery.render({ items: cards });
 }
 
 function renderBasket(): void {
     const items = basket.getItems();
     const cards = items.map((item, idx) => {
         const container = cloneTemplate(basketCardTemplate);
-        const card = new BasketCard(container, events, item.id);
+        const card = new BasketCard(container, () => {
+            events.emit('basket:removeItem', { id: item.id });
+        });
         
-        const cardData: ICardData = {
-            id: item.id,
+        card.render({
             title: item.title,
             price: item.price,
             index: idx + 1
-        };
-        card.render(cardData);
+        });
         return container;
     });
-    basketView.items = cards;
-    basketView.total = basket.getTotalPrice();
+    
+    basketView.render({
+        items: cards,
+        total: basket.getTotalPrice(),
+        valid: basket.getItemCount() > 0
+    });
 }
 
 function renderPreview(): void {
@@ -105,48 +108,46 @@ function renderPreview(): void {
     if (!selected) return;
 
     const container = cloneTemplate(previewCardTemplate);
-    const preview = new CardPreview(container, events, selected.id);
+    const preview = new CardPreview(container, () => {
+        events.emit('preview:addToBasket', { id: selected.id });
+    });
     
-    // Определяем состояние кнопки на основе данных модели
     const isInBasket = basket.containsItem(selected.id);
     const isAvailable = selected.price !== null && selected.price > 0;
     
-    const cardData: ICardData = {
+    preview.render({
         title: selected.title,
-        category: selected.category,
         price: selected.price,
+        category: selected.category,
         description: selected.description,
         image: getImageUrl(selected.image),
         buttonLabel: isInBasket ? 'Уже в корзине' : (isAvailable ? 'В корзину' : 'Недоступно'),
         buttonDisabled: !isAvailable
-    };
-    preview.render(cardData);
+    });
 
-    modal.content = container;
-    modal.visible = true;
+    modal.render({ content: container, visible: true });
 }
 
 function renderCurrentForm(): void {
     const data = customer.getData();
     const errors = customer.validate();
     const errorsList = Object.values(errors);
+    const isValid = errorsList.length === 0;
     
     if (currentStep === 'order') {
-        const formData: IFormData = {
+        orderForm.render({
             payment: data.payment,
             address: data.address,
-            valid: !!(data.payment && data.address),
+            valid: isValid,
             errors: errorsList
-        };
-        orderForm.render(formData);
+        });
     } else if (currentStep === 'contacts') {
-        const formData: IFormData = {
+        contactsForm.render({
             email: data.email,
             phone: data.phone,
-            valid: !!(data.email && data.phone),
+            valid: isValid,
             errors: errorsList
-        };
-        contactsForm.render(formData);
+        });
     }
 }
 
@@ -155,9 +156,10 @@ function renderCurrentForm(): void {
 events.on('catalog:changed', () => renderCatalog());
 events.on('catalog:selectedChanged', () => renderPreview());
 events.on('basket:changed', () => {
-    header.counter = basket.getItemCount();
+    header.render({ counter: basket.getItemCount() });
     renderBasket();
     if (catalog.getSelectedProduct()) renderPreview();
+    modal.render({ visible: false });
 });
 events.on('customer:changed', () => {
     renderCurrentForm();
@@ -172,8 +174,9 @@ events.on('card:select', ({ id }: { id: string }) => {
 
 events.on('preview:addToBasket', ({ id }: { id: string }) => {
     const product = catalog.getProductById(id);
-    if (product && product.price !== null && product.price > 0) basket.addItem(product);
-    modal.visible = false;
+    if (product && product.price !== null && product.price > 0) {
+        basket.addItem(product);
+    }
 });
 
 events.on('basket:removeItem', ({ id }: { id: string }) => {
@@ -181,14 +184,12 @@ events.on('basket:removeItem', ({ id }: { id: string }) => {
 });
 
 events.on('basket:open', () => {
-    modal.content = basketView.element;
-    modal.visible = true;
+    modal.render({ content: basketView.element, visible: true });
 });
 
 events.on('basket:order', () => {
     currentStep = 'order';
-    modal.content = orderForm.element;
-    // Модель уже имеет данные, вызов customer:changed обновит форму
+    modal.render({ content: orderForm.element, visible: true });
     events.emit('customer:changed');
 });
 
@@ -196,7 +197,7 @@ events.on('order:submit', () => {
     const data = customer.getData();
     if (data.payment && data.address) {
         currentStep = 'contacts';
-        modal.content = contactsForm.element;
+        modal.render({ content: contactsForm.element, visible: true });
         events.emit('customer:changed');
     }
 });
@@ -204,7 +205,6 @@ events.on('order:submit', () => {
 events.on('contacts:submit', async () => {
     const customerData = customer.getData();
     
-    // Обрабатываем null явно
     if (!customerData.payment) {
         console.error('Способ оплаты не выбран');
         return;
@@ -221,9 +221,8 @@ events.on('contacts:submit', async () => {
     
     try {
         const result = await api.postOrder(orderData);
-        const successData: ISuccessData = { total: result.total };
-        successView.render(successData);
-        modal.content = successView.element;
+        successView.render({ total: result.total });
+        modal.render({ content: successView.element, visible: true });
         basket.clearBasket();
         customer.clearData();
         currentStep = null;
@@ -254,7 +253,7 @@ events.on('modal:closed', () => {
 });
 
 events.on('success:close', () => {
-    modal.visible = false;
+    modal.render({ visible: false });
 });
 
 // ==================== СТАРТ ====================

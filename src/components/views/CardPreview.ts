@@ -1,31 +1,31 @@
-import { BaseCard } from './common/BaseCard';
-import { IEventEmitter } from '../base/Events';
+import { BaseCard, IBaseCardState } from './common/BaseCard';
 import { categoryMap } from '../../utils/constants';
 import { ensureElement } from '../../utils/utils';
 
-export class CardPreview extends BaseCard {
+export interface ICardPreviewState extends IBaseCardState {
+    category: string;
+    description: string;
+    image: string;
+    buttonLabel: string;
+    buttonDisabled: boolean;
+}
+
+export class CardPreview extends BaseCard<ICardPreviewState> {
     private descriptionElement: HTMLElement;
     private categoryElement: HTMLElement;
     private buttonElement: HTMLButtonElement;
     private imageElement: HTMLImageElement;
-    private productId: string;
 
-    constructor(container: HTMLElement, events: IEventEmitter, productId: string) {
+    constructor(container: HTMLElement, onAddToBasket: () => void) {
         super(container);
-        this.productId = productId;
         this.descriptionElement = ensureElement('.card__text', container);
         this.categoryElement = ensureElement('.card__category', container);
         this.buttonElement = ensureElement<HTMLButtonElement>('.card__button', container);
         this.imageElement = ensureElement<HTMLImageElement>('.card__image', container);
-
         this.buttonElement.addEventListener('click', (e) => {
             e.stopPropagation();
-            events.emit('preview:addToBasket', { id: this.productId });
+            onAddToBasket();
         });
-    }
-
-    set id(value: string) {
-        this.productId = value;
     }
 
     set category(value: string) {

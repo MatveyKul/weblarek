@@ -1,8 +1,13 @@
-import { Form } from './common/Form';
+import { Form, IFormState } from './common/Form';
 import { IEventEmitter } from '../base/Events';
 import { ensureElement } from '../../utils/utils';
 
-export class ContactsForm extends Form {
+export interface IContactsFormState extends IFormState {
+    email: string;
+    phone: string;
+}
+
+export class ContactsForm extends Form<IContactsFormState> {
     private emailInput: HTMLInputElement;
     private phoneInput: HTMLInputElement;
 

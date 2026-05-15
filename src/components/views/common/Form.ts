@@ -7,7 +7,7 @@ export interface IFormState {
     errors: string[];
 }
 
-export abstract class Form extends Component<IFormState> {
+export abstract class Form<T extends IFormState> extends Component<T> {
     protected submitButton: HTMLButtonElement;
     protected errorsContainer: HTMLElement;
 
@@ -22,11 +22,11 @@ export abstract class Form extends Component<IFormState> {
         });
     }
 
-    protected set errors(errors: string[]) {
-        this.errorsContainer.textContent = errors.join(', ');
+    set valid(value: boolean) {
+        this.submitButton.disabled = !value;
     }
 
-    protected set valid(value: boolean) {
-        this.submitButton.disabled = !value;
+    set errors(errors: string[]) {
+        this.errorsContainer.textContent = errors.join(', ');
     }
 }

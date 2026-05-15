@@ -1,9 +1,14 @@
-import { Form } from './common/Form';
+import { Form, IFormState } from './common/Form';
 import { IEventEmitter } from '../base/Events';
 import { TPayment } from '../../types';
 import { ensureElement } from '../../utils/utils';
 
-export class OrderForm extends Form {
+export interface IOrderFormState extends IFormState {
+    payment: TPayment | null;
+    address: string;
+}
+
+export class OrderForm extends Form<IOrderFormState> {
     private cardButton: HTMLButtonElement;
     private cashButton: HTMLButtonElement;
     private addressInput: HTMLInputElement;

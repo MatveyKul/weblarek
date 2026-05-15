@@ -1,26 +1,21 @@
-import { BaseCard } from './common/BaseCard';
-import { IEventEmitter } from '../base/Events';
+import { BaseCard, IBaseCardState } from './common/BaseCard';
 import { categoryMap } from '../../utils/constants';
 import { ensureElement } from '../../utils/utils';
 
-export class CardCatalog extends BaseCard {
+export interface ICardCatalogState extends IBaseCardState {
+    category: string;
+    image: string;
+}
+
+export class CardCatalog extends BaseCard<ICardCatalogState> {
     private categoryElement: HTMLElement;
     private imageElement: HTMLImageElement;
-    private productId: string;
 
-    constructor(container: HTMLElement, events: IEventEmitter, productId: string) {
+    constructor(container: HTMLElement, onClick: () => void) {
         super(container);
-        this.productId = productId;
         this.categoryElement = ensureElement('.card__category', container);
         this.imageElement = ensureElement<HTMLImageElement>('.card__image', container);
-
-        this.element.addEventListener('click', () => {
-            events.emit('card:select', { id: this.productId });
-        });
-    }
-
-    set id(value: string) {
-        this.productId = value;
+        this.element.addEventListener('click', onClick);
     }
 
     set category(value: string) {

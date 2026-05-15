@@ -1,9 +1,15 @@
 import { Component } from '../../base/Component';
 import { ensureElement } from '../../../utils/utils';
 
-export abstract class BaseCard extends Component<HTMLElement> {
+export interface IBaseCardState {
+    title: string;
+    price: number | null;
+}
+
+export abstract class BaseCard<T extends IBaseCardState> extends Component<T> {
     protected titleElement: HTMLElement;
     protected priceElement: HTMLElement;
+    protected productId?: string;
 
     constructor(container: HTMLElement) {
         super(container);
@@ -11,12 +17,15 @@ export abstract class BaseCard extends Component<HTMLElement> {
         this.priceElement = ensureElement('.card__price', container);
     }
 
+    set id(value: string) {
+        this.productId = value;
+    }
+
     set title(value: string) {
         this.titleElement.textContent = value;
     }
 
     set price(value: number | null) {
-        const formattedPrice = value === null ? 'Бесценно' : `${value} синапсов`;
-        this.priceElement.textContent = formattedPrice;
+        this.priceElement.textContent = value === null ? 'Бесценно' : `${value} синапсов`;
     }
 }

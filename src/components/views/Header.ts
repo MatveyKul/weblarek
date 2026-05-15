@@ -1,9 +1,8 @@
-// components/views/Header.ts
 import { Component } from '../base/Component';
 import { IEventEmitter } from '../base/Events';
 import { ensureElement } from '../../utils/utils';
 
-interface IHeaderData {
+export interface IHeaderData {
     counter: number;
 }
 
@@ -23,12 +22,5 @@ export class Header extends Component<IHeaderData> {
 
     set counter(value: number) {
         this.counterElement.textContent = String(value);
-    }
-
-    render(data?: Partial<IHeaderData>): HTMLElement {
-        if (data && data.counter !== undefined) {
-            this.counter = data.counter;
-        }
-        return this.container;
     }
 }

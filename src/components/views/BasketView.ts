@@ -1,15 +1,14 @@
-// components/views/BasketView.ts
 import { Component } from '../base/Component';
 import { IEventEmitter } from '../base/Events';
 import { ensureElement } from '../../utils/utils';
 
-interface IBasketViewData {
+export interface IBasketViewState {
     items: HTMLElement[];
     total: number;
     valid: boolean;
 }
 
-export class BasketView extends Component<IBasketViewData> {
+export class BasketView extends Component<IBasketViewState> {
     protected listElement: HTMLElement;
     protected priceElement: HTMLElement;
     protected orderButton: HTMLButtonElement;
@@ -26,8 +25,7 @@ export class BasketView extends Component<IBasketViewData> {
     }
 
     set items(elements: HTMLElement[]) {
-        this.listElement.innerHTML = '';
-        elements.forEach(item => this.listElement.appendChild(item));
+        this.listElement.replaceChildren(...elements);
     }
 
     set total(value: number) {
@@ -36,14 +34,5 @@ export class BasketView extends Component<IBasketViewData> {
 
     set valid(value: boolean) {
         this.orderButton.disabled = !value;
-    }
-
-    render(data?: Partial<IBasketViewData>): HTMLElement {
-        if (data) {
-            if (data.items !== undefined) this.items = data.items;
-            if (data.total !== undefined) this.total = data.total;
-            if (data.valid !== undefined) this.valid = data.valid;
-        }
-        return this.container;
     }
 }
