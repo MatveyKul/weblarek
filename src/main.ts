@@ -129,27 +129,31 @@ function renderPreview(): void {
 }
 
 function renderCurrentForm(): void {
-    const data = customer.getData();
-    const errors = customer.validate();
-    const errorsList = Object.values(errors);
-    const isValid = errorsList.length === 0;
-    
-    if (currentStep === 'order') {
-        orderForm.render({
-            payment: data.payment,
-            address: data.address,
-            valid: isValid,
-            errors: errorsList
-        });
-    } else if (currentStep === 'contacts') {
-        contactsForm.render({
-            email: data.email,
-            phone: data.phone,
-            valid: isValid,
-            errors: errorsList
-        });
-    }
+const data = customer.getData();
+const allErrors = customer.validate();
+
+if (currentStep === 'order') {
+const stepErrors = Object.entries(allErrors)
+    .filter(([key]) => ['payment', 'address'].includes(key))
+    .map(([, value]) => value);
+orderForm.render({
+    payment: data.payment,
+    address: data.address,
+    valid: stepErrors.length === 0,
+    errors: stepErrors
+});
+} else if (currentStep === 'contacts') {
+const stepErrors = Object.entries(allErrors)
+    .filter(([key]) => ['email', 'phone'].includes(key))
+    .map(([, value]) => value);
+contactsForm.render({
+    email: data.email,
+    phone: data.phone,
+    valid: stepErrors.length === 0,
+    errors: stepErrors
+});
 }
+} 
 
 // ==================== ОБРАБОТЧИКИ СОБЫТИЙ МОДЕЛЕЙ ====================
 
@@ -223,9 +227,7 @@ events.on('contacts:submit', async () => {
         const result = await api.postOrder(orderData);
         successView.render({ total: result.total });
         modal.render({ content: successView.element, visible: true });
-        basket.clearBasket();
-        customer.clearData();
-        currentStep = null;
+        // Убираем clearBasket, clearData и currentStep = null отсюда
     } catch (err) {
         console.error(err);
     }
@@ -254,6 +256,9 @@ events.on('modal:closed', () => {
 
 events.on('success:close', () => {
     modal.render({ visible: false });
+    basket.clearBasket();
+    customer.clearData();
+    currentStep = null;
 });
 
 // ==================== СТАРТ ====================
